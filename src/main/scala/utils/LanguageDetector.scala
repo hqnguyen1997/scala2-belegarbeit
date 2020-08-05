@@ -20,14 +20,17 @@ object LanguageDetector {
    * @return
    */
   def detect(tokens: Array[String]): String = {
+    //Alle tokens werden nur einmalig betrachtet
     val tokensDistinct = tokens.toSet
+    //ein Scoring wird ermittelt, wie oft wird ein token, in einer Stopwortliste gefunden
     val scoring = topLanguages.map(t => {
         val wordsSource = getClass.getResourceAsStream("/" + t._2)
         val wordsSet = Source.fromInputStream(wordsSource)(Codec("ISO-8859-1")).getLines().toSet
         val score = wordsSet.intersect(tokensDistinct).size
         (t._1, score)
-    }) ++ Map("UNKNOWN" -> (1 + tokensDistinct.size / 10))
-    // detected language
+
+    }) ++      Map("UNKNOWN" -> (1 + tokensDistinct.size / 10)) //Eine Extra Scoring wird addiert damit auch unbekannte Token ermittelt werden können
+    // detected language, die Sprache mit höchsten Score wird vermutet
     scoring.maxBy { case (key: String, value: Int) => value }._1
   }
 
