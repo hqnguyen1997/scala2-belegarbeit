@@ -33,7 +33,7 @@ object CreateIndex {
     //url , tokens , Langcode
     val langaugesDetected = tokenized.map(rec=>(rec._1,rec._2,LanguageDetector.detect(rec._2)))
 
-    val preferredLanguages = List("DE", "ENG")
+    val preferredLanguages = List(LanguageDetector.LANGCODE_GERMAN,LanguageDetector.LANGCODE_ENGLISH)
     //nur unsere bevorzugten sprachen werden herausgenommen
     val filteredLanguages=langaugesDetected.filter(preferredLanguages contains _._3)
     //Stopworte werden gefiltert
@@ -41,7 +41,7 @@ object CreateIndex {
     //url, stemmedTokens
     val stemmedData=cleanData.map(rec=>(
       rec._1,
-      if(rec._3=="DE") rec._2.map(word=>GermanStemmer.stem(word))
+      if(rec._3==LanguageDetector.LANGCODE_GERMAN) rec._2.map(word=>GermanStemmer.stem(word))
       else rec._2.map(word=>EnglishStemmer.stem(word))
       ))
 

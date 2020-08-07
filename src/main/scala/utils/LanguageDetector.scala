@@ -3,14 +3,22 @@ package utils
 import scala.io.{Codec, Source}
 
 object LanguageDetector {
+  val LANGCODE_GERMAN="de"
+  val LANGCODE_ENGLISH="en"
+  val LANGCODE_POLISH="pl"
+  val LANGCODE_SPANISH="es"
+  val LANGCODE_RUSSIAN="ru"
+  val LANGCODE_PORTUGUESE="pt"
+  val LANGCODE_GREEK="grc"
+
   val topLanguages = Map(
-    "de" -> "top1000de.txt",
-    "en" -> "google-10000-english.txt",
-    "pl" -> "top1000pl.txt",
-    "es" -> "top1000esp.txt",
-    "ru" -> "top1000ru.txt",
-    "pt" -> "top1000prt.txt",
-    "GRC" -> "top1000grc.txt"
+    this.LANGCODE_GERMAN -> "top1000de.txt",
+    this.LANGCODE_ENGLISH -> "google-10000-english.txt",
+    this.LANGCODE_POLISH -> "top1000pl.txt",
+    this.LANGCODE_SPANISH -> "top1000esp.txt",
+    this.LANGCODE_RUSSIAN -> "top1000ru.txt",
+    this.LANGCODE_PORTUGUESE -> "top1000prt.txt",
+    this.LANGCODE_GREEK -> "top1000grc.txt"
   )
 
   /**
