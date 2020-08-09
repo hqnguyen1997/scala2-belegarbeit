@@ -8,6 +8,12 @@ resolvers ++= Seq(
   "Typesafe Repository" at "https://repo1.maven.org/maven2/"
 )
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.8" % Test
-libraryDependencies += "org.apache.spark" %% "spark-core" % "2.4.4"
-libraryDependencies += "org.apache.spark" %% "spark-sql" % "2.4.4"
+libraryDependencies ++= Seq(
+  "org.scalatest" %% "scalatest" % "3.0.8" % Test,
+  "org.apache.spark" %% "spark-core" % "2.4.4",
+  "org.apache.spark" %% "spark-sql" % "2.4.4",
+  // Webserver
+  "com.typesafe.akka" %% "akka-actor" % "2.3.16",
+  "com.typesafe.akka" %% "akka-http" % "10.1.5",
+  "com.typesafe.akka" %% "akka-stream" % "2.5.31"
+)
