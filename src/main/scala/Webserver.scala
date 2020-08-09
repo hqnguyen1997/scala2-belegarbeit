@@ -3,7 +3,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import search.{IndexMachine, InvertedIndex}
+import search.{IndexMachine, InvertedIndex, SearchMachine}
 
 import scala.io.StdIn
 
@@ -16,34 +16,29 @@ object WebServer {
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    //val invertedIndex = new InvertedIndex(Map.empty,0).loadIndex("invertedIndex.bin")
     val invertedIndex = new IndexMachine().loadIndex("invertedIndex.bin")
-    val route =
-      concat(
+    val searchMachine = new SearchMachine(invertedIndex)
+
+    val route = concat(
       path("api") {
-      get{
-        parameter("query".as[String]) { (query) =>
-          val result=invertedIndex.search(query)
-          if(result.size=="") {
-            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,"{}" ))
-          }else {
-
-          val jsonResult=scala.util.parsing.json.JSONObject(result)
-
-          complete(HttpEntity(ContentTypes.`application/json`,jsonResult.toString() ))
+        get {
+          parameter("query".as[String]) {query =>
+            val result=searchMachine.search(query)
+            if(result.size=="") {
+              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,"{}" ))
+            } else {
+              val jsonResult=scala.util.parsing.json.JSONObject(result)
+              complete(HttpEntity(ContentTypes.`application/json`,jsonResult.toString() ))
+            }
           }
         }
+      },
+      path("") {
+        get {
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,scala.io.Source.fromFile("searchengine.html").mkString ))
+        }
       }
-      },      path("") {
-        get{
-
-              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,scala.io.Source.fromFile("searchengine.html").mkString ))
-
-
-        }
-        }
-
-      )
+    )
 
     val bindingFuture = Http().bindAndHandle(route, "localhost", 8080)
 
