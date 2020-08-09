@@ -3,7 +3,7 @@ import java.sql.DriverManager
 
 object ReadSql {
 
-
+  //SQL kommt nicht mehr zum einsatz!!
   def main(args: Array[String]) {
 
     val spark = SparkSession.builder()
