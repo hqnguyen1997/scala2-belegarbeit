@@ -1,5 +1,6 @@
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
+import search.InvertedIndex
 
 object Search {
   def main(args: Array[String]): Unit = {

@@ -1,3 +1,5 @@
+package search
+
 import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
 
 import stemmers.{EnglishStemmer, GermanStemmer}
