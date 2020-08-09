@@ -1,5 +1,6 @@
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
+import stemmers.{EnglishStemmer, GermanStemmer}
 import utils.{LanguageDetector, Tokenizer}
 
 
@@ -9,18 +10,11 @@ object CreateIndex {
     val importFileName="smallTestSample.csv"
     val exportFileName="invertedIndex.bin"
 
-    val conf = new SparkConf().setAppName("appName").setMaster("local")
+    val conf = new SparkConf().setAppName("appName").setMaster("local[2]")
     val sc = new SparkContext(conf)
-
-
-
     val csvData = sc.textFile(importFileName)
-
     println("Documents Total:"+csvData.count())
-
     val t1 = System.nanoTime()
-
-
     val rows:RDD[(String,String)]=csvData.map(line => {
       val splitted:Array[String]=line.split(";")
       if(splitted.size==2)(splitted(0),splitted(1)) else ("","")
@@ -31,7 +25,7 @@ object CreateIndex {
     //url , tokens , Langcode
     val langaugesDetected = tokenized.map(rec=>(rec._1,rec._2,LanguageDetector.detect(rec._2)))
 
-    val preferredLanguages = List("DE", "ENG")
+    val preferredLanguages = List("de", "en")
     val filteredLanguages=langaugesDetected.filter(preferredLanguages contains _._3)
     val cleanData=filteredLanguages.map(rec=>(rec._1,StopwordFilter.filter(rec._2,rec._3),rec._3))
     //url, stemmedTokens

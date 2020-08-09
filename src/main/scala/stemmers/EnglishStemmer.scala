@@ -1,3 +1,4 @@
+package stemmers
 
 object EnglishStemmer {
   def stem(word: String): String = {
@@ -8,10 +9,10 @@ object EnglishStemmer {
       "ss" → "ss",
       "s" → "")
 
-    if ((stem matchedBy ((~v~) + "ed")) ||
-      (stem matchedBy ((~v~) + "ing"))) {
+    if ((stem matchedBy ((~v ~) + "ed")) ||
+      (stem matchedBy ((~v ~) + "ing"))) {
 
-      stem = stem.applyReplaces(~v~)("ed" → "", "ing" → "")
+      stem = stem.applyReplaces(~v ~)("ed" → "", "ing" → "")
 
       stem = stem.applyReplaces(
         "at" → "ate",
@@ -23,7 +24,7 @@ object EnglishStemmer {
       stem = stem.applyReplaces(((m > 0) + "eed") → "ee")
     }
 
-    stem = stem.applyReplaces(((~v~) + "y") → "i")
+    stem = stem.applyReplaces(((~v ~) + "y") → "i")
 
     // Remove suffixes
     stem = stem.applyReplaces(m > 0)(
@@ -88,18 +89,20 @@ object EnglishStemmer {
   }
 
   /**
-    * Pattern that is matched against the word.
-    * Usually, the end of the word is compared to suffix,
-    * and the beginning is checked to satisfy a condition.
-    * @param condition Condition to be checked
-    * @param suffix Expected suffix of the word
-    */
+   * Pattern that is matched against the word.
+   * Usually, the end of the word is compared to suffix,
+   * and the beginning is checked to satisfy a condition.
+   *
+   * @param condition Condition to be checked
+   * @param suffix    Expected suffix of the word
+   */
   private case class Pattern(condition: Condition, suffix: String)
 
   /**
-    * Condition, that is checked against the beginning of the word
-    * @param predicate Predicate to be applied to the word
-    */
+   * Condition, that is checked against the beginning of the word
+   *
+   * @param predicate Predicate to be applied to the word
+   */
   private case class Condition(predicate: Word ⇒ Boolean) {
     def + = new Pattern(this, _: String)
 
@@ -136,9 +139,10 @@ object EnglishStemmer {
   private val v = Condition(_.containsVowels)
 
   /**
-    * Builder of the stem
-    * @param build Function to be called to build a stem
-    */
+   * Builder of the stem
+   *
+   * @param build Function to be called to build a stem
+   */
   private case class StemBuilder(build: Word ⇒ Word)
 
   private def suffixStemBuilder(suffix: String) = StemBuilder(_ + suffix)
@@ -148,7 +152,7 @@ object EnglishStemmer {
   private class Word(string: String) {
     val word = string.toLowerCase
 
-    def trimSuffix(suffixLength: Int) = new Word(word substring (0, word.length - suffixLength))
+    def trimSuffix(suffixLength: Int) = new Word(word substring(0, word.length - suffixLength))
 
     def endsWith = word endsWith _
 
@@ -180,9 +184,10 @@ object EnglishStemmer {
         !(Set('w', 'x', 'y') contains word(word.length - 2))
 
     /**
-      * Measure of the word -- the number of VCs
-      * @return integer
-      */
+     * Measure of the word -- the number of VCs
+     *
+     * @return integer
+     */
     def measure = word.indices.filter(pos ⇒ hasVowelAt(pos) && hasConsonantAt(pos + 1)).length
 
     def matchedBy: Pattern ⇒ Boolean = {
@@ -207,7 +212,10 @@ object EnglishStemmer {
 
   private implicit def pimpMyRule[P <% Pattern, SB <% StemBuilder]
   (rule: (P, SB)): (Pattern, StemBuilder) = (rule._1, rule._2)
+
   private implicit def emptyConditionPattern: String ⇒ Pattern = Pattern(emptyCondition, _)
+
   private implicit def emptySuffixPattern: Condition ⇒ Pattern = Pattern(_, "")
+
   private implicit def suffixedStemBuilder: String ⇒ StemBuilder = suffixStemBuilder
 }

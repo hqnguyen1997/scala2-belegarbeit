@@ -1,5 +1,6 @@
 import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
 
+import stemmers.{EnglishStemmer, GermanStemmer}
 import utils.{LanguageDetector, Tokenizer}
 
 class InvertedIndex(oldII:Map[String, Map[String,Int]],documentsSize:Int) {
