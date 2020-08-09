@@ -3,7 +3,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import search.InvertedIndex
+import search.{IndexMachine, InvertedIndex}
 
 import scala.io.StdIn
 
@@ -16,8 +16,8 @@ object WebServer {
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    val invertedIndex = new InvertedIndex(Map.empty,0).loadFromFile("invertedIndex.bin")
-
+    //val invertedIndex = new InvertedIndex(Map.empty,0).loadIndex("invertedIndex.bin")
+    val invertedIndex = new IndexMachine().loadIndex("invertedIndex.bin")
     val route =
       concat(
       path("api") {
