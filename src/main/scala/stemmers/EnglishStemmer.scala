@@ -154,11 +154,11 @@ object EnglishStemmer {
 
     def trimSuffix(suffixLength: Int) = new Word(word substring(0, word.length - suffixLength))
 
-    def endsWith = word endsWith _
+    def endsWith: String => Boolean = word endsWith _
 
     def +(suffix: String) = new Word(word + suffix)
 
-    def satisfies = (_: Condition).predicate(this)
+    def satisfies: Condition => Boolean = (_: Condition).predicate(this)
 
     def hasConsonantAt(position: Int): Boolean =
       (word.indices contains position) && (word(position) match {
@@ -167,9 +167,9 @@ object EnglishStemmer {
         case _ ⇒ true
       })
 
-    def hasVowelAt = !hasConsonantAt(_: Int)
+    def hasVowelAt: Int => Boolean = !hasConsonantAt(_: Int)
 
-    def containsVowels = word.indices exists hasVowelAt
+    def containsVowels: Boolean = word.indices exists hasVowelAt
 
     def endsWithCC =
       (word.length > 1) &&
@@ -188,7 +188,7 @@ object EnglishStemmer {
      *
      * @return integer
      */
-    def measure = word.indices.filter(pos ⇒ hasVowelAt(pos) && hasConsonantAt(pos + 1)).length
+    def measure: Int = word.indices.filter(pos ⇒ hasVowelAt(pos) && hasConsonantAt(pos + 1)).length
 
     def matchedBy: Pattern ⇒ Boolean = {
       case Pattern(condition, suffix) ⇒

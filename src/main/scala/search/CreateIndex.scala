@@ -4,7 +4,6 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 object CreateIndex {
   def main(args: Array[String]): Unit = {
-
     val importFileName = "smallTestSample.csv"
     val exportFileName = "invertedIndex.bin"
 

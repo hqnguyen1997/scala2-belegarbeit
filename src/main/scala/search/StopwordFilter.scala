@@ -1,6 +1,6 @@
 package search
 
-import utils.{LangCode, LanguageDetector}
+import utils.{LangCode}
 
 import scala.io.Codec
 

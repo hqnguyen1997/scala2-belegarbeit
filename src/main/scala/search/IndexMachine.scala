@@ -9,7 +9,7 @@ import utils.{LangCode, LanguageDetector, Tokenizer}
 
 class IndexMachine {
 
-  def createIndex(dataSource:String, indexOutput:String, sc:SparkContext): InvertedIndex = {
+  def createIndex(dataSource: String, indexOutput: String, sc: SparkContext): InvertedIndex = {
 
     val csvData = sc.textFile(dataSource)
     val preferredLanguages = List(LangCode.GERMAN, LangCode.ENGLISH)
@@ -21,7 +21,7 @@ class IndexMachine {
       if (splitted.size == 2) (splitted(0), splitted(1)) else ("", "")
     })
 
-    val preparedData:RDD[(String, Map[String, Int])] =
+    val preparedData: RDD[(String, Map[String, Int])] =
       rows
         // (url, token)
         .map(rec => (rec._1, Tokenizer.tokenize(rec._2)))
@@ -50,7 +50,7 @@ class IndexMachine {
     invertedIndex
   }
 
-  def saveIndex(index:InvertedIndex, indexOutput:String):Unit={
+  def saveIndex(index: InvertedIndex, indexOutput: String): Unit = {
     val oos = new ObjectOutputStream(new FileOutputStream(indexOutput))
     try {
       oos.writeObject(index)
@@ -59,7 +59,7 @@ class IndexMachine {
     }
   }
 
-  def loadIndex(indexSrc:String):InvertedIndex = {
+  def loadIndex(indexSrc: String): InvertedIndex = {
     val ois = new ObjectInputStream(new FileInputStream(indexSrc))
     try {
       ois.readObject.asInstanceOf[InvertedIndex]

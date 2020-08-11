@@ -28,20 +28,20 @@ object WebServer {
     val route = concat(
       path("api") {
         get {
-          parameter("query".as[String]) {query =>
-            val result=searchMachine.search(query)
-            if(result.size=="") {
-              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,"{}" ))
+          parameter("query".as[String]) { query =>
+            val result = searchMachine.search(query)
+            if (result.size == "") {
+              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "{}"))
             } else {
-              val jsonResult=scala.util.parsing.json.JSONObject(result)
-              complete(HttpEntity(ContentTypes.`application/json`,jsonResult.toString() ))
+              val jsonResult = scala.util.parsing.json.JSONObject(result)
+              complete(HttpEntity(ContentTypes.`application/json`, jsonResult.toString()))
             }
           }
         }
       },
       path("") {
         get {
-          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`,scala.io.Source.fromFile("searchengine.html").mkString ))
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, scala.io.Source.fromFile("searchengine.html").mkString))
         }
       }
     )
@@ -55,13 +55,22 @@ object WebServer {
       .onComplete(_ => system.terminate()) // and shutdown when done
   }
 
-  def initSearchServer(indexDataSource: String, indexSrc: String, sc: SparkContext):SearchMachine = {
+  def initSearchServer(indexDataSource: String, indexSrc: String, sc: SparkContext): SearchMachine = {
     try {
       val invertedIndex = new IndexMachine().loadIndex("invertedIndex.bin")
+      print("Ein Index ist vorhanden. Laden von Index erfolgreich")
       new SearchMachine(invertedIndex)
     } catch {
       case e: Exception => {
+        print("Ein Index ist nicht vorhanden. Laden von Index wird jetztt ausgeführt")
+        val t1 = System.nanoTime()
+
         val invertedIndex = new IndexMachine().createIndex(indexDataSource, indexSrc, sc)
+
+        val t2 = System.nanoTime()
+        //Index wird gespeichert
+        println("Index generiert in" + (t2 - t1) / 1e+6 / 1000 + " Sek.")
+
         new SearchMachine(invertedIndex)
       }
     }

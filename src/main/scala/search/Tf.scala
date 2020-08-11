@@ -1,8 +1,10 @@
 package search
 
 object Tf {
+
   /**
    * es wird eine Map erstellt, Token -> Url, Vorkommenshäufigkeit
+   *
    * @param tokens
    * @return
    */
