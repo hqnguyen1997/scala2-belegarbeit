@@ -58,18 +58,18 @@ object WebServer {
   def initSearchServer(indexDataSource: String, indexSrc: String, sc: SparkContext): SearchMachine = {
     try {
       val invertedIndex = new IndexMachine().loadIndex("invertedIndex.bin")
-      print("Ein Index ist vorhanden. Laden von Index erfolgreich")
+      println("Ein Index ist vorhanden. Laden von Index erfolgreich")
       new SearchMachine(invertedIndex)
     } catch {
       case e: Exception => {
-        print("Ein Index ist nicht vorhanden. Laden von Index wird jetztt ausgeführt")
+        println("Ein Index ist nicht vorhanden. Laden von Index wird jetztt ausgeführt")
         val t1 = System.nanoTime()
 
         val invertedIndex = new IndexMachine().createIndex(indexDataSource, indexSrc, sc)
 
         val t2 = System.nanoTime()
         //Index wird gespeichert
-        println("Index generiert in" + (t2 - t1) / 1e+6 / 1000 + " Sek.")
+        println("Index generiert in: " + (t2 - t1) / 1e+6 / 1000 + " Sek.")
 
         new SearchMachine(invertedIndex)
       }
