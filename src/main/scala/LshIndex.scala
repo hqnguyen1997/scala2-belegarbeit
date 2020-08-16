@@ -1,7 +1,7 @@
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 
-class LshIndex(bandSize:Int = 4) {
+class LshIndex(bandSize: Int = 4) {
 
   private var index = new HashMap[String, ArrayBuffer[String]]
 
@@ -19,15 +19,25 @@ class LshIndex(bandSize:Int = 4) {
 
 
   def query(minhash: Minhash): Set[String] = {
-    var matches = Set.empty[String]
-    var hashbands = this.getHashbands(minhash)
-    for (i <- 0 until hashbands.length) {
-      var band = hashbands(i)
-      for (j <- 0 until index(band).length) {
-        matches += index(band)(j)
+
+    def helper(hashbands: ArrayBuffer[String], minhash: Minhash, matches: Set[String] = Set.empty, i: Int = 0, j: Int = 0): Set[String] = {
+
+      if (i == hashbands.length)
+        matches
+      else {
+        val band = hashbands(i)
+
+        if (j == index(band).length) {
+          helper(hashbands, minhash, matches, i + 1, 0)
+        } else {
+          helper(hashbands, minhash, matches + index(band)(j): Set[String], i, j + 1)
+        }
+
       }
     }
-    matches
+
+    helper(this.getHashbands(minhash), minhash)
+    
   }
 
   def getHashbands(minhash: Minhash): ArrayBuffer[String] = {
