@@ -1,8 +1,8 @@
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 
-class LshIndex {
-  private val bandSize = 4
+class LshIndex(bandSize:Int = 4) {
+
   private var index = new HashMap[String, ArrayBuffer[String]]
 
   def insert(key: String, minhash: Minhash): Unit = {
