@@ -1,17 +1,22 @@
-import scala.collection.mutable.Map
+import scala.collection.mutable.{ArrayBuffer, Map}
 
-class Minhash(numPerm:Int=128,var seed:Int=1) {
+class Minhash(val seed:Int=1,
+              var hashbands:ArrayBuffer[Long]=ArrayBuffer.empty,
+              var hashbandsStr:ArrayBuffer[String]=ArrayBuffer.empty,
+              hashvalues:ArrayBuffer[Long]=ArrayBuffer.empty,
+              var permA:ArrayBuffer[Int]=ArrayBuffer.empty,
+              var permB:ArrayBuffer[Int]=ArrayBuffer.empty
+             ) {
+
+  val numPerm:Int=128
+
   // prime is the smallest prime larger than the largest
   // possible hash value (max hash = 32 bit int)
   private val prime = 4294967311l
   //Math.pow(2, 32) - 1
   private val maxHash = 4294967295l
-  var hashbands = scala.collection.mutable.ArrayBuffer.empty[Long]
-  var hashbandsStr = scala.collection.mutable.ArrayBuffer.empty[String]
 
-  var hashvalues = scala.collection.mutable.ArrayBuffer.empty[Long]
-  private var permA = scala.collection.mutable.ArrayBuffer.empty[Int]
-  private var permB = scala.collection.mutable.ArrayBuffer.empty[Int]
+
 
   def inithashvalues: Unit = {
 
