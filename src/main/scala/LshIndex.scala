@@ -1,3 +1,5 @@
+import minhash.Minhash
+
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
