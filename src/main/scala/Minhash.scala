@@ -23,7 +23,7 @@ class Minhash(var seed:Int=1,
   def inithashvalues(): Minhash = {
     @tailrec
     def helper(i:Int=0,minhash: Minhash=this): Minhash = {
-      if (i > minhash.numPerm)
+      if (i == minhash.numPerm)
         minhash
       else
         helper(i + 1, new Minhash(minhash.seed, minhash.hashbands, minhash.hashbandsStr, minhash.hashvalues ++ ArrayBuffer(minhash.maxHash), minhash.permA, minhash.permB))
@@ -45,7 +45,7 @@ class Minhash(var seed:Int=1,
 
 
           def permHelper(i:Int=0,used:Map[Int,Boolean]=Map.empty,perms:ArrayBuffer[Int]=ArrayBuffer.empty):ArrayBuffer[Int]={
-            if(i>this.numPerm)
+            if(i==this.numPerm)
               perms
             else {
               var int: Int = this.randInt()
