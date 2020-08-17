@@ -156,16 +156,20 @@ object Minhash {
       "estimating", "the", "similarity", "between", "datasets")
     var s2: Array[String] = Array("minhash", "is", "a", "probability", "data", "structure", "for",
       "estimating", "the", "similarity", "between", "documents")
+    var s3: Array[String] = Array("cats", "are", "tall", "and", "have", "been",
+    "known", "to", "sing", "quite", "loudly")
 
     // create a hash for each set of words to compare
     var m1 = new Minhash().inithashvalues().initPermutations
     var m2 = new Minhash().inithashvalues().initPermutations
+    var m3 = new Minhash().inithashvalues().initPermutations
 
     // update each hash
     s1.map(w => m1.update(w))
     s2.map(w => m2.update(w))
+    s3.map(w=>  m3.update(w))
     // estimate the jaccard similarity between two minhashes
-    println(m1.jaccard(m2))
+    println(m2.jaccard(m3))
   }
 
 }

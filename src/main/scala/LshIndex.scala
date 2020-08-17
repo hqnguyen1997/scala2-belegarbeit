@@ -22,12 +22,12 @@ class LshIndex(bandSize: Int = 4) {
 
     def helper(hashbands: ArrayBuffer[String], minhash: Minhash, matches: Set[String] = Set.empty, i: Int = 0, j: Int = 0): Set[String] = {
 
-      if (i == hashbands.length)
+      if (i == hashbands.length-1)
         matches
       else {
         val band = hashbands(i)
 
-        if (j == index(band).length) {
+        if (j == index(band).length-1) {
           helper(hashbands, minhash, matches, i + 1, 0)
         } else {
           helper(hashbands, minhash, matches + index(band)(j): Set[String], i, j + 1)
@@ -77,12 +77,13 @@ object LshIndex {
 
     // add each document to a Locality Sensitive Hashing index
     var index = new LshIndex()
+
     index.insert("m1", m1)
     index.insert("m2", m2)
     index.insert("m3", m3)
 
     // query for documents that appear similar to a query document
-    var matches = index.query(m1);
+    var matches = index.query(m1)
     matches.foreach(w => println(w))
   }
 }
