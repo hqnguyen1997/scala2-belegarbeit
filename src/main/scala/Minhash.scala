@@ -23,7 +23,7 @@ class Minhash(var seed:Int=1,
   def inithashvalues(): Minhash = {
     @tailrec
     def helper(i:Int=0,minhash: Minhash=this): Minhash = {
-      if (i == (minhash.numPerm - 1))
+      if (i > minhash.numPerm)
         minhash
       else
         helper(i + 1, new Minhash(minhash.seed, minhash.hashbands, minhash.hashbandsStr, minhash.hashvalues ++ ArrayBuffer(minhash.maxHash), minhash.permA, minhash.permB))
@@ -36,29 +36,33 @@ class Minhash(var seed:Int=1,
   def initPermutations: Minhash = {
 
     def helper(i: Int=0):Minhash={
-      var used: Map[Int, Boolean] = Map.empty
+
       if(i>1)
         this
       else
         {
 
 
-          var perms = scala.collection.mutable.ArrayBuffer.empty[Int]
 
-          for (j <- 0 to this.numPerm) {
-            var int: Int = this.randInt()
-            while (used.exists(_ == int)) {
-              int = this.randInt()
+          def permHelper(i:Int=0,used:Map[Int,Boolean]=Map.empty,perms:ArrayBuffer[Int]=ArrayBuffer.empty):ArrayBuffer[Int]={
+            if(i>this.numPerm)
+              perms
+            else {
+              var int: Int = this.randInt()
+              while (used.exists(_ == int)) {
+                int = this.randInt()
+              }
+
+              permHelper(i+1,used ++ Map(int -> true),perms++ArrayBuffer(int))
             }
-            perms += int
-
-            used = used ++ Map(int -> true)
           }
 
+
+
           if (i == 0)
-            this.permA = perms
+            this.permA = permHelper()
           else
-            this.permB = perms
+            this.permB = permHelper()
 
 
           helper(i+1)
