@@ -1,3 +1,4 @@
+import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.HashMap
 
@@ -5,29 +6,41 @@ class LshIndex(bandSize: Int = 4) {
 
   private var index = new HashMap[String, ArrayBuffer[String]]
 
-  def insert(key: String, minhash: Minhash): Unit = {
+  def insert(key: String, minhash: Minhash): LshIndex = {
     var hashbands = this.getHashbands(minhash)
-    for (i <- 0 until hashbands.length) {
-      var band = hashbands(i)
-      if (!index.contains(band)) {
-        index(band) = ArrayBuffer[String](key)
-      } else {
-        index(band) += key
+
+    @tailrec
+    def helper(i: Int, max: Int): LshIndex = {
+
+      if (i == hashbands.length)
+        this
+      else {
+        var band = hashbands(i)
+        if (!index.contains(band)) {
+          index(band) = ArrayBuffer[String](key)
+        } else {
+          index(band) += key
+        }
+        helper(i + 1, max)
       }
     }
+
+
+    helper(0, hashbands.length)
+
   }
 
 
   def query(minhash: Minhash): Set[String] = {
-
+    @tailrec
     def helper(hashbands: ArrayBuffer[String], minhash: Minhash, matches: Set[String] = Set.empty, i: Int = 0, j: Int = 0): Set[String] = {
 
-      if (i == hashbands.length-1)
+      if (i == hashbands.length - 1)
         matches
       else {
         val band = hashbands(i)
 
-        if (j == index(band).length-1) {
+        if (j == index(band).length - 1) {
           helper(hashbands, minhash, matches, i + 1, 0)
         } else {
           helper(hashbands, minhash, matches + index(band)(j): Set[String], i, j + 1)
@@ -37,7 +50,7 @@ class LshIndex(bandSize: Int = 4) {
     }
 
     helper(this.getHashbands(minhash), minhash)
-    
+
   }
 
   def getHashbands(minhash: Minhash): ArrayBuffer[String] = {
@@ -78,12 +91,10 @@ object LshIndex {
     // add each document to a Locality Sensitive Hashing index
     var index = new LshIndex()
 
-    index.insert("m1", m1)
-    index.insert("m2", m2)
-    index.insert("m3", m3)
+    var newIndex = index.insert("m1", m1).insert("m2", m2).insert("m3", m3)
 
     // query for documents that appear similar to a query document
-    var matches = index.query(m1)
+    var matches = newIndex.query(m1)
     matches.foreach(w => println(w))
   }
 }
