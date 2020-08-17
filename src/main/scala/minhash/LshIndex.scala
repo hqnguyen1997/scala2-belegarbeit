@@ -1,15 +1,14 @@
-import minhash.Minhash
+package minhash
 
 import scala.annotation.tailrec
-import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.HashMap
+import scala.collection.mutable.{ArrayBuffer, HashMap}
 
 class LshIndex(bandSize: Int = 4) {
 
-  private var index = new HashMap[String, ArrayBuffer[String]]
+  private val index = new HashMap[String, ArrayBuffer[String]]
 
   def insert(key: String, minhash: Minhash): LshIndex = {
-    var hashbands = this.getHashbands(minhash)
+    val hashbands = this.getHashbands(minhash)
 
     @tailrec
     def helper(i: Int, max: Int): LshIndex = {
@@ -17,7 +16,7 @@ class LshIndex(bandSize: Int = 4) {
       if (i == hashbands.length)
         this
       else {
-        var band = hashbands(i)
+        val band = hashbands(i)
         if (!index.contains(band)) {
           index(band) = ArrayBuffer[String](key)
         } else {
@@ -27,9 +26,7 @@ class LshIndex(bandSize: Int = 4) {
       }
     }
 
-
     helper(0, hashbands.length)
-
   }
 
 
@@ -47,7 +44,6 @@ class LshIndex(bandSize: Int = 4) {
         } else {
           helper(hashbands, minhash, matches + index(band)(j): Set[String], i, j + 1)
         }
-
       }
     }
 
@@ -59,30 +55,28 @@ class LshIndex(bandSize: Int = 4) {
 
     if (!minhash.hashbandsStr.isEmpty) minhash.hashbandsStr
     for (i <- 0 to (minhash.hashvalues.length / this.bandSize)) {
-      var start = i * this.bandSize
-      var end = start + this.bandSize
-      var band = minhash.hashvalues.slice(start, end)
+      val start = i * this.bandSize
+      val end = start + this.bandSize
+      val band = minhash.hashvalues.slice(start, end)
       minhash.hashbandsStr += band.mkString(".")
     }
     minhash.hashbandsStr
-
   }
-
 
 }
 
 object LshIndex {
   def main(args: Array[String]): Unit = {
 
-    var s1: Array[String] = Array("minhash", "is", "a", "probabilistic", "data", "structure", "for",
+    val s1: Array[String] = Array("minhash", "is", "a", "probabilistic", "data", "structure", "for",
       "estimating", "the", "similarity", "between", "datasets")
-    var s2: Array[String] = Array("minhash", "is", "a", "probability", "data", "structure", "for",
+    val s2: Array[String] = Array("minhash", "is", "a", "probability", "data", "structure", "for",
       "estimating", "the", "similarity", "between", "documents")
-    var s3: Array[String] = Array("cats", "are", "tall", "and", "have", "been", "known", "to", "sing", "quite", "loudly")
+    val s3: Array[String] = Array("cats", "are", "tall", "and", "have", "been", "known", "to", "sing", "quite", "loudly")
     // generate a hash for each list of words
-    var m1 = new Minhash().inithashvalues().initPermutations
-    var m2 = new Minhash().inithashvalues().initPermutations
-    var m3 = new Minhash().inithashvalues().initPermutations
+    val m1 = new Minhash().inithashvalues().initPermutations
+    val m2 = new Minhash().inithashvalues().initPermutations
+    val m3 = new Minhash().inithashvalues().initPermutations
 
     // update each hash
     s1.map(w => m1.update(w))
@@ -91,12 +85,12 @@ object LshIndex {
 
 
     // add each document to a Locality Sensitive Hashing index
-    var index = new LshIndex()
+    val index = new LshIndex()
 
-    var newIndex = index.insert("m1", m1).insert("m2", m2).insert("m3", m3)
+    val newIndex = index.insert("m1", m1).insert("m2", m2).insert("m3", m3)
 
     // query for documents that appear similar to a query document
-    var matches = newIndex.query(m1)
+    val matches = newIndex.query(m1)
     matches.foreach(w => println(w))
   }
 }
