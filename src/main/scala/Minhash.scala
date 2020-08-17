@@ -35,28 +35,41 @@ class Minhash(var seed:Int=1,
   // don't reuse any integers when making the functions
   def initPermutations: Minhash = {
 
-    var used: Map[Int, Boolean] = Map.empty
-    for (i <- 0 to 1) {
-      {
+    def helper(i: Int=0):Minhash={
+      var used: Map[Int, Boolean] = Map.empty
+      if(i>1)
+        this
+      else
+        {
 
-        var perms = scala.collection.mutable.ArrayBuffer.empty[Int]
-        for (j <- 0 to this.numPerm) {
-          var int: Int = this.randInt()
-          while (used.exists(_ == int)) {
-            int = this.randInt()
+
+          var perms = scala.collection.mutable.ArrayBuffer.empty[Int]
+
+          for (j <- 0 to this.numPerm) {
+            var int: Int = this.randInt()
+            while (used.exists(_ == int)) {
+              int = this.randInt()
+            }
+            perms += int
+
+            used = used ++ Map(int -> true)
           }
-          perms += int
 
-          used = used ++ Map(int -> true)
+          if (i == 0)
+            this.permA = perms
+          else
+            this.permB = perms
+
+
+          helper(i+1)
         }
 
-        if (i == 0)
-          this.permA = perms
-        else
-          this.permB = perms
-      }
+
+
     }
-  this
+
+    helper()
+
   }
 
   def hash(str: String): Long = {
