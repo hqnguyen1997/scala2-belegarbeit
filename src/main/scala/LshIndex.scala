@@ -65,9 +65,9 @@ object LshIndex {
       "estimating", "the", "similarity", "between", "documents")
     var s3: Array[String] = Array("cats", "are", "tall", "and", "have", "been", "known", "to", "sing", "quite", "loudly")
     // generate a hash for each list of words
-    var m1 = new Minhash().inithashvalues.initPermutations
-    var m2 = new Minhash().inithashvalues.initPermutations
-    var m3 = new Minhash().inithashvalues.initPermutations
+    var m1 = new Minhash().inithashvalues().initPermutations
+    var m2 = new Minhash().inithashvalues().initPermutations
+    var m3 = new Minhash().inithashvalues().initPermutations
 
     // update each hash
     s1.map(w => m1.update(w))

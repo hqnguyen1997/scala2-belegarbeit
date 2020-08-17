@@ -1,4 +1,5 @@
 import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.collection.mutable.{ArrayBuffer, Map}
 
 class Minhash(var seed:Int=1,
@@ -19,12 +20,15 @@ class Minhash(var seed:Int=1,
 
 
 
-  def inithashvalues: Minhash = {
-
-    for (a <- 0 to this.numPerm) {
-      this.hashvalues += this.maxHash
+  def inithashvalues(): Minhash = {
+    @tailrec
+    def helper(i:Int=0,minhash: Minhash=this): Minhash = {
+      if (i == (minhash.numPerm - 1))
+        minhash
+      else
+        helper(i + 1, new Minhash(minhash.seed, minhash.hashbands, minhash.hashbandsStr, minhash.hashvalues ++ ArrayBuffer(minhash.maxHash), minhash.permA, minhash.permB))
     }
-    this
+    helper()
   }
 
   // initialize the permutation functions for a & b
@@ -137,8 +141,8 @@ object Minhash {
       "estimating", "the", "similarity", "between", "documents")
 
     // create a hash for each set of words to compare
-    var m1 = new Minhash().inithashvalues.initPermutations
-    var m2 = new Minhash().inithashvalues.initPermutations
+    var m1 = new Minhash().inithashvalues().initPermutations
+    var m2 = new Minhash().inithashvalues().initPermutations
 
     // update each hash
     s1.map(w => m1.update(w))
