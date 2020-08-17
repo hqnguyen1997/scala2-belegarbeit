@@ -54,16 +54,23 @@ class Minhash(var seed:Int=1,
   }
 
   def hash(str: String): Long = {
-    var hash = 0;
-    if (str.length == 0) {
-      hash + this.maxHash
+
+    if (str.length == 0)
+       this.maxHash
+
+
+    def helper(hash:Int=0,i:Int=0):Long={
+      if(i == (str.length ))
+        hash+this.maxHash
+      else {
+        val char = str.charAt(i)
+        val hash1 = ((hash << 5) - hash) + char
+        val hash2 = hash1 & hash1 // convert to a 32bit integer
+        helper(hash2,i+1)
+      }
     }
-    for (i <- 0 to str.length - 1) {
-      var char = str.charAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // convert to a 32bit integer
-    }
-    hash + this.maxHash
+    helper()
+
   }
 
   def update(str: String): Unit = {
