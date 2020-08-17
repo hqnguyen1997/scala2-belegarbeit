@@ -3,12 +3,12 @@ package minhash
 import scala.annotation.tailrec
 import scala.collection.mutable.{ArrayBuffer, Map}
 
-class Minhash(seed: Int = 1,
-              hashbands: ArrayBuffer[Long] = ArrayBuffer.empty,
-              hashbandsStr: ArrayBuffer[String] = ArrayBuffer.empty,
-              hashvalues: ArrayBuffer[Long] = ArrayBuffer.empty,
-              permA: ArrayBuffer[Int] = ArrayBuffer.empty,
-              permB: ArrayBuffer[Int] = ArrayBuffer.empty
+class Minhash(var seed: Int = 1,
+              var hashbands: ArrayBuffer[Long] = ArrayBuffer.empty,
+              var hashbandsStr: ArrayBuffer[String] = ArrayBuffer.empty,
+              var hashvalues: ArrayBuffer[Long] = ArrayBuffer.empty,
+              var permA: ArrayBuffer[Int] = ArrayBuffer.empty,
+              var permB: ArrayBuffer[Int] = ArrayBuffer.empty
              ) {
 
   val numPerm: Int = 128
@@ -19,14 +19,20 @@ class Minhash(seed: Int = 1,
   //Math.pow(2, 32) - 1
   val maxHash = 4294967295L
 
-
   def inithashvalues(): Minhash = {
     @tailrec
     def helper(i: Int = 0, minhash: Minhash = this): Minhash = {
       if (i == minhash.numPerm)
         minhash
       else
-        helper(i + 1, new Minhash(minhash.seed, minhash.hashbands, minhash.hashbandsStr, minhash.hashvalues ++ ArrayBuffer(minhash.maxHash), minhash.permA, minhash.permB))
+        helper(i + 1,
+          new Minhash(minhash.seed,
+            minhash.hashbands,
+            minhash.hashbandsStr,
+            minhash.hashvalues ++ ArrayBuffer(minhash.maxHash),
+            minhash.permA,
+            minhash.permB)
+        )
     }
 
     helper()
@@ -35,13 +41,17 @@ class Minhash(seed: Int = 1,
   // initialize the permutation functions for a & b
   // don't reuse any integers when making the functions
   def initPermutations: Minhash = {
-
+    @tailrec
     def helper(i: Int = 0): Minhash = {
 
       if (i > 1)
         this
       else {
-        def permHelper(i: Int = 0, used: Map[Int, Boolean] = Map.empty, perms: ArrayBuffer[Int] = ArrayBuffer.empty): ArrayBuffer[Int] = {
+        def permHelper(i: Int = 0,
+                       used: Map[Int, Boolean] = Map.empty,
+                       perms: ArrayBuffer[Int] = ArrayBuffer.empty
+                      ): ArrayBuffer[Int] = {
+
           if (i == this.numPerm)
             perms
           else {
@@ -70,6 +80,7 @@ class Minhash(seed: Int = 1,
     if (str.length == 0)
       this.maxHash
 
+    @tailrec
     def helper(hash: Int = 0, i: Int = 0): Long = {
       if (i == str.length)
         hash + this.maxHash
