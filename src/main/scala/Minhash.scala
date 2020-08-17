@@ -1,3 +1,4 @@
+import scala.annotation.tailrec
 import scala.collection.mutable.{ArrayBuffer, Map}
 
 class Minhash(var seed:Int=1,
@@ -87,14 +88,22 @@ class Minhash(var seed:Int=1,
     } else if (this.seed != other.seed) {
       println("seed values differ")
     }
-    var shared = 0
 
-    for (i <- 0 until this.hashvalues.length) {
+
+    @tailrec
+    def helper(shared:Int=0,i:Int=0):Int={
+      if(i==this.hashvalues.length)
+        shared
+      else
 
       if (this.hashvalues(i) == other.hashvalues(i))
-        shared = shared + 1
+        helper(shared+1,i+1)
+      else
+        helper(shared,i+1)
+
     }
-    return shared.toDouble / this.hashvalues.length.toDouble
+    val shared=helper().toDouble
+    shared / this.hashvalues.length.toDouble
   }
 
 
