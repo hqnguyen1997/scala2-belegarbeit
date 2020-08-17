@@ -19,16 +19,17 @@ class Minhash(var seed:Int=1,
 
 
 
-  def inithashvalues: Unit = {
+  def inithashvalues: Minhash = {
 
     for (a <- 0 to this.numPerm) {
       this.hashvalues += this.maxHash
     }
+    this
   }
 
   // initialize the permutation functions for a & b
   // don't reuse any integers when making the functions
-  def initPermutations: Unit = {
+  def initPermutations: Minhash = {
 
     var used: Map[Int, Boolean] = Map.empty
     for (i <- 0 to 1) {
@@ -51,6 +52,7 @@ class Minhash(var seed:Int=1,
           this.permB = perms
       }
     }
+  this
   }
 
   def hash(str: String): Long = {
@@ -121,8 +123,8 @@ class Minhash(var seed:Int=1,
     Math.floor((x - Math.floor(x)) * this.maxHash).toInt
   }
 
-  this.inithashvalues
-  this.initPermutations
+
+
 
 }
 
@@ -135,8 +137,9 @@ object Minhash {
       "estimating", "the", "similarity", "between", "documents")
 
     // create a hash for each set of words to compare
-    var m1 = new Minhash
-    var m2 = new Minhash
+    var m1 = new Minhash().inithashvalues.initPermutations
+    var m2 = new Minhash().inithashvalues.initPermutations
+
     // update each hash
     s1.map(w => m1.update(w))
     s2.map(w => m2.update(w))
