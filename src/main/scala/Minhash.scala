@@ -1,9 +1,9 @@
 import scala.collection.mutable.{ArrayBuffer, Map}
 
-class Minhash(val seed:Int=1,
+class Minhash(var seed:Int=1,
               var hashbands:ArrayBuffer[Long]=ArrayBuffer.empty,
               var hashbandsStr:ArrayBuffer[String]=ArrayBuffer.empty,
-              hashvalues:ArrayBuffer[Long]=ArrayBuffer.empty,
+              var hashvalues:ArrayBuffer[Long]=ArrayBuffer.empty,
               var permA:ArrayBuffer[Int]=ArrayBuffer.empty,
               var permB:ArrayBuffer[Int]=ArrayBuffer.empty
              ) {
