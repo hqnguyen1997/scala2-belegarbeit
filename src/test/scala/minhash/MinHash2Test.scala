@@ -32,13 +32,44 @@ class MinHash2Test extends FunSuite {
     })
   }
 
+  test("Generate Shingles with other shingle length") {
+    val text = "This is a very, helpful test text. But just a test"
+    val shingleLength: Int = 5
+
+    val minHash = new MinHash2(text, 100, shingleLength, 5)
+
+    val shingles = minHash.generateShingles()
+
+    shingles.foreach(shingle => {
+      assert(shingle.split(" ").length == shingleLength)
+    })
+  }
+
   test("Minhash signature") {
     val text = "This is a very, helpful test text. But just a test"
 
     val minHash = new MinHash2(text)
 
     val sigs = minHash.generateMinHashSignature()
-    assert(sigs.length != 0)
+    assert(sigs != null)
+  }
+
+  test("Minhash signature length should be equal as given (default 100)") {
+    val text = "This is a very, helpful test text. But just a test"
+
+    val minHash = new MinHash2(text)
+
+    val sigs = minHash.generateMinHashSignature()
+    assert(sigs.length == 100)
+  }
+
+  test("Minhash signature length should be equal as given") {
+    val text = "This is a very, helpful test text. But just a test"
+
+    val minHash = new MinHash2(text, 200, 3, 5)
+
+    val sigs = minHash.generateMinHashSignature()
+    assert(sigs.length == 200)
   }
 
   test("Calculate Similarity of same string") {
@@ -62,6 +93,7 @@ class MinHash2Test extends FunSuite {
     val text2 = "Some test text, compare"
     val minHash1 = new MinHash2(text1)
     val minHash2 = new MinHash2(text2)
+    println(minHash1.generateMinHashSignature().deep.mkString(","))
     assert(MinHash2.minhashSimilarity(minHash1.generateMinHashSignature(), minHash2.generateMinHashSignature()) > 0.4
       && MinHash2.minhashSimilarity(minHash1.generateMinHashSignature(), minHash2.generateMinHashSignature()) < 0.6)
   }
