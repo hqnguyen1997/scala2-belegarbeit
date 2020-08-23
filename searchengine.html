@@ -62,7 +62,11 @@
             var html = "";
             resultSorted.forEach(function (value) {
                 html += "<div class=\"row\">\n" +
-                    "<div class=\"col-12 p-2 bg-secondary  mt-4\"><a target='_blank'  class='text-white' href='" + value + "'>" + value + "</a></div>\n" +
+                    "<div class=\"col-12 p-2 bg-secondary  mt-4\"><a target='_blank'  class='text-white' href='" + value + "'>" + value + "</a>" +
+                    "<button data-url='" + value + "' onclick='onGetDuplicate()' class=\"btn btn-primary\" style=\"\n" +
+                    "    float: right;\n" +
+                    "\"> Find Duplicate </button>" +
+                    "</div>\n" +
                     "</div>";
             });
             $("#results").html(html);
@@ -71,6 +75,28 @@
             $("#counter").html("<b>results:</b> " + resultSorted.length + " - <b>elapsed time:</b> " + time + " Miliseconds");
 
         });
+    }
+
+    function onGetDuplicate() {
+        const btn = event.srcElement;
+        const url = btn.getAttribute("data-url");
+        fetch(`/api/duplicate?url=${url}`, {
+            method: "GET",
+        }).then((response) => {
+            response.json().then((jsonResult) => {
+                const resultArray = jsonResult.result.split(",");
+                let html = "";
+
+                resultArray.forEach((url) => {
+                    html += "<div class=\"row\">\n" +
+                        "<div class=\"col-12 p-2 bg-secondary  mt-4\"><a target='_blank'  class='text-white' href='" + url + "'>" + url + "</a>" +
+                        "</div>\n" +
+                        "</div>";
+                });
+
+                $("#results").html(html);
+            })
+        })
     }
 </script>
 </body>

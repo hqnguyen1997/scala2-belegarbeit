@@ -33,12 +33,18 @@ object WebServer {
         path("search") {
           get {
             parameter("query".as[String]) { query =>
-              val result = searchMachine.search(query)
-              if (result.size == "") {
-                complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "{}"))
+              if (query.contains("url:::")) {
+                val params = query.split(":::")
+                val result = searchMachine.searchUrl(params(1))
+                complete(HttpEntity(ContentTypes.`application/json`, "{\"" + result + "\": 1 }"))
               } else {
-                val jsonResult = scala.util.parsing.json.JSONObject(result)
-                complete(HttpEntity(ContentTypes.`application/json`, jsonResult.toString()))
+                val result = searchMachine.search(query)
+                if (result.size == "") {
+                  complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "{}"))
+                } else {
+                  val jsonResult = scala.util.parsing.json.JSONObject(result)
+                  complete(HttpEntity(ContentTypes.`application/json`, jsonResult.toString()))
+                }
               }
             }
           }
@@ -49,7 +55,8 @@ object WebServer {
           get {
             parameter("url".as[String]) { url =>
               val result = findDuplicate(url, lshIndex)
-              val jsonResult = scala.util.parsing.json.JSONObject(Map("result" -> result))
+              val arrayResult = result.first.deep.mkString(",")
+              val jsonResult = scala.util.parsing.json.JSONObject(Map("result" -> arrayResult))
               complete(HttpEntity(ContentTypes.`application/json`, jsonResult.toString()))
             }
           }

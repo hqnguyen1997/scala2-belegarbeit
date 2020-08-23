@@ -5,6 +5,11 @@ import utils.{LanguageDetector, Tokenizer}
 
 class SearchMachine(index: InvertedIndex) {
 
+  /**
+   *
+   * @param query
+   * @return url and score
+   */
   def search(query: String): Map[String, Double] = {
     //die suchanfrage wird tokenisiert
     val tokens = Tokenizer.tokenize(query)
@@ -25,5 +30,10 @@ class SearchMachine(index: InvertedIndex) {
     val tf_idf = tokenTFDFCorupusSize.map(rec => (rec._1, Math.log10(rec._3.toDouble / rec._2.toDouble)))
 
     tf_idf.flatMap(rec => rec._1.map { case (k, v) => (k, v * rec._2) }).toMap
+  }
+
+  def searchUrl(url: String): String = {
+    if (index.getIndex().find(_._1 == url) != null) url
+    else ""
   }
 }
