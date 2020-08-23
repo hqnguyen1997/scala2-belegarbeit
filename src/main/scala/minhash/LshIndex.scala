@@ -1,96 +1,107 @@
 package minhash
 
-import scala.annotation.tailrec
-import scala.collection.mutable.{ArrayBuffer, HashMap}
+import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.rdd.RDD
 
-class LshIndex(bandSize: Int = 4) {
+class LshIndex(shingleLength: Int, signatureLength: Int, seed: Int, numBuckets: Int, output: String, sc: SparkContext) extends Serializable {
 
-  private val index = new HashMap[String, ArrayBuffer[String]]
+  /* Define how many rows should be in a bucket */
+  val rows = signatureLength / numBuckets
 
-  def insert(key: String, minhash: Minhash): LshIndex = {
-    val hashbands = this.getHashbands(minhash)
+  val rowsBc = sc.broadcast(rows)
+  val shingleLengthBc = sc.broadcast(shingleLength)
+  val signatureLengthBc = sc.broadcast(signatureLength)
+  val seedBc = sc.broadcast(seed)
 
-    @tailrec
-    def helper(i: Int, max: Int): LshIndex = {
 
-      if (i == hashbands.length)
-        this
-      else {
-        val band = hashbands(i)
-        if (!index.contains(band)) {
-          index(band) = ArrayBuffer[String](key)
-        } else {
-          index(band) += key
-        }
-        helper(i + 1, max)
-      }
-    }
+  def createIndex(data: RDD[(String, String)]) = {
+    val minhashSignature = generateMinhashSignature(data)
+    val candidatePairs = groupCandidatePairs(minhashSignature)
+    val matchingsPairs = getMatchingPair(candidatePairs)
+    val lshIndex = matchingsPairs.flatMap { case (doc1, doc2) =>
+      Set((doc1, doc2), (doc2, doc1))
+    }.aggregateByKey(collection.mutable.Set.empty[String])((s, v) => s += v, (h1, h2) => h1 ++= h2).map { case (key, cluster) =>
+      cluster += key
+    }.distinct()
 
-    helper(0, hashbands.length)
+    // Save Index in text file
+    lshIndex.map(cluster => cluster.mkString(" ")).saveAsTextFile(output)
   }
 
-
-  def query(minhash: Minhash): Set[String] = {
-    @tailrec
-    def helper(hashbands: ArrayBuffer[String], minhash: Minhash, matches: Set[String] = Set.empty, i: Int = 0, j: Int = 0): Set[String] = {
-
-      if (i == hashbands.length - 1)
-        matches
-      else {
-        val band = hashbands(i)
-
-        if (j == index(band).length - 1) {
-          helper(hashbands, minhash, matches, i + 1, 0)
-        } else {
-          helper(hashbands, minhash, matches + index(band)(j): Set[String], i, j + 1)
+  /**
+   * Generate Minhash Signature matrix
+   *
+   * @param data RDD(url, text)
+   */
+  def generateMinhashSignature(data: RDD[(String, String)]): RDD[(String, Array[Int])] = {
+    data.map {
+      case (id, text) =>
+        // Some data contains no hashable content, it would throw exception
+        try {
+          val minHash = new MinHash(text, signatureLengthBc.value, shingleLengthBc.value, seedBc.value)
+          (id, minHash.generateMinHashSignature())
+        } catch {
+          case e: Exception => null
         }
-      }
-    }
-
-    helper(this.getHashbands(minhash), minhash)
-
+    }.filter(el => el != null)
   }
 
-  def getHashbands(minhash: Minhash): ArrayBuffer[String] = {
+  /**
+   * Group all candidate duplicated pairs into bucket
+   */
+  def groupCandidatePairs(minhashSignatures: RDD[(String, Array[Int])]): RDD[Set[(String, Array[Int])]] = {
+    val buckets = minhashSignatures.flatMap { case (id, signature) =>
+      signature.grouped(rowsBc.value).zipWithIndex.map { case (band, bandIndex) =>
+        ((bandIndex, band.toList.hashCode), (id, signature))
+      }
+    }.aggregateByKey(collection.mutable.Iterable.empty[(String, Array[Int])])((s, v) => s ++ Iterable(v), (i1, i2) => i1 ++ i2)
 
-    if (!minhash.hashbandsStr.isEmpty) minhash.hashbandsStr
-    for (i <- 0 to (minhash.hashvalues.length / this.bandSize)) {
-      val start = i * this.bandSize
-      val end = start + this.bandSize
-      val band = minhash.hashvalues.slice(start, end)
-      minhash.hashbandsStr += band.mkString(".")
+    buckets.flatMap { case ((bandIndex, bucketId), cluster) =>
+      cluster.flatMap(doc1 => cluster.map(doc2 => Set(doc1, doc2)))
+    }.distinct().cache()
+  }
+
+  def getMatchingPair(candidatePairsRDD: RDD[Set[(String, Array[Int])]]): RDD[(String, String)] = {
+    candidatePairsRDD.map { pair =>
+      if (pair.size == 1) {
+        (pair, 1.0D)
+      } else {
+        (pair, MinHash.minhashSimilarity(pair.head._2, pair.tail.head._2))
+      }
+    }.filter { case (pair, score) =>
+      score > 0.8D
+    }.map { case (pair, score) =>
+      if (pair.size == 1) {
+        (pair.head._1, pair.head._1)
+      } else {
+        (pair.head._1, pair.tail.head._1)
+      }
     }
-    minhash.hashbandsStr
   }
 
 }
 
 object LshIndex {
   def main(args: Array[String]): Unit = {
+    val indexDataSource = "smallTestSample.csv"
+    val conf = new SparkConf().setAppName("appName").setMaster("local[2]")
+    val sc = new SparkContext(conf)
 
-    val s1: Array[String] = Array("minhash", "is", "a", "probabilistic", "data", "structure", "for",
-      "estimating", "the", "similarity", "between", "datasets")
-    val s2: Array[String] = Array("minhash", "is", "a", "probability", "data", "structure", "for",
-      "estimating", "the", "similarity", "between", "documents")
-    val s3: Array[String] = Array("cats", "are", "tall", "and", "have", "been", "known", "to", "sing", "quite", "loudly")
-    // generate a hash for each list of words
-    val m1 = new Minhash().inithashvalues().initPermutations
-    val m2 = new Minhash().inithashvalues().initPermutations
-    val m3 = new Minhash().inithashvalues().initPermutations
+    val csvData = sc.textFile(indexDataSource)
 
-    // update each hash
-    s1.map(w => m1.update(w))
-    s2.map(w => m2.update(w))
-    s3.map(w => m3.update(w))
+    val data: RDD[(String, String)] = csvData.map(line => {
+      // Read lines
+      val splitted: Array[String] = line.split(";")
+      // Get url
+      if (splitted.size == 2) {
+        (splitted(0), splitted(1).replaceAll("\\[[^\\)]*\\]", ""))
+      } else {
+        ("", "")
+      }
+    })
 
-
-    // add each document to a Locality Sensitive Hashing index
-    val index = new LshIndex()
-
-    val newIndex = index.insert("m1", m1).insert("m2", m2).insert("m3", m3)
-
-    // query for documents that appear similar to a query document
-    val matches = newIndex.query(m1)
-    matches.foreach(w => println(w))
+    val lshIndex = new LshIndex(5, 100, 5, 20, "lshindex", sc)
+    lshIndex.createIndex(data)
+    sc.stop()
   }
 }

@@ -2,7 +2,7 @@ package minhash
 
 import scala.util.hashing.{MurmurHash3}
 
-class MinHash2(text: String, signatureLength: Int = 100, shingleLength: Int = 3, seed: Int = 5) {
+class MinHash(text: String, signatureLength: Int = 100, shingleLength: Int = 3, seed: Int = 5) {
 
   /**
    * Generate array of shingles
@@ -23,7 +23,7 @@ class MinHash2(text: String, signatureLength: Int = 100, shingleLength: Int = 3,
   }
 }
 
-object MinHash2 {
+object MinHash {
   def minhashSimilarity[A](item1: Array[A], item2: Array[A]): Double = {
     if (item1.length != item2.length) {
       throw new IllegalArgumentException("MinHashes must be equal length")
