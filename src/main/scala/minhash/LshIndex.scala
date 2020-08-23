@@ -101,7 +101,15 @@ object LshIndex {
     })
 
     val lshIndex = new LshIndex(5, 100, 5, 20, "lshindex", sc)
-    lshIndex.createIndex(data)
+    try {
+      lshIndex.createIndex(data)
+    } catch {
+      case e: Exception => println("Already indexed")
+    } finally {
+      val index = sc.textFile("lshindex/part-*").map(line => line.split(" "))
+      index.foreach(line => println(line.deep.mkString(" => ")))
+    }
+
     sc.stop()
   }
 }

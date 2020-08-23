@@ -3,6 +3,8 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
+import minhash.LshIndex
+import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 import search.{IndexMachine, InvertedIndex, SearchMachine}
 
@@ -24,16 +26,30 @@ object WebServer {
     val sc = new SparkContext(conf)
 
     val searchMachine = initSearchServer(indexDataSource, indexSrc, sc)
+    val lshIndex = initLshIndex(indexSrc, sc)
 
     val route = concat(
-      path("api") {
-        get {
-          parameter("query".as[String]) { query =>
-            val result = searchMachine.search(query)
-            if (result.size == "") {
-              complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "{}"))
-            } else {
-              val jsonResult = scala.util.parsing.json.JSONObject(result)
+      pathPrefix("api") {
+        path("search") {
+          get {
+            parameter("query".as[String]) { query =>
+              val result = searchMachine.search(query)
+              if (result.size == "") {
+                complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "{}"))
+              } else {
+                val jsonResult = scala.util.parsing.json.JSONObject(result)
+                complete(HttpEntity(ContentTypes.`application/json`, jsonResult.toString()))
+              }
+            }
+          }
+        }
+      },
+      pathPrefix("api") {
+        path("duplicate") {
+          get {
+            parameter("url".as[String]) { url =>
+              val result = findDuplicate(url, lshIndex)
+              val jsonResult = scala.util.parsing.json.JSONObject(Map("result" -> result))
               complete(HttpEntity(ContentTypes.`application/json`, jsonResult.toString()))
             }
           }
@@ -74,5 +90,38 @@ object WebServer {
         new SearchMachine(invertedIndex)
       }
     }
+  }
+
+  def initLshIndex(indexDataSource: String, sc: SparkContext): RDD[Array[String]] = {
+    val csvData = sc.textFile(indexDataSource)
+
+    val data: RDD[(String, String)] = csvData.map(line => {
+      // Read lines
+      val splitted: Array[String] = line.split(";")
+      // Get url
+      if (splitted.size == 2) {
+        (splitted(0), splitted(1).replaceAll("\\[[^\\)]*\\]", ""))
+      } else {
+        ("", "")
+      }
+    })
+
+    val lshIndex = new LshIndex(5, 100, 5, 20, "lshindex", sc)
+
+    try {
+      lshIndex.createIndex(data)
+    } catch {
+      case e: Exception => println("Already indexed")
+    }
+
+    val index = sc.textFile("lshindex/part-*").map(line => line.split(" "))
+    index.foreach(line => println(line.deep.mkString(" => ")))
+
+    index
+
+  }
+
+  def findDuplicate(url: String, lshIndex: RDD[Array[String]]): RDD[Array[String]] = {
+    lshIndex.filter(item => item.contains(url))
   }
 }
