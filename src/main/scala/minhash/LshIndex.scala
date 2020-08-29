@@ -80,36 +80,3 @@ class LshIndex(shingleLength: Int, signatureLength: Int, seed: Int, numBuckets: 
   }
 
 }
-
-object LshIndex {
-  def main(args: Array[String]): Unit = {
-    val indexDataSource = "smallTestSample.csv"
-    val conf = new SparkConf().setAppName("appName").setMaster("local[2]")
-    val sc = new SparkContext(conf)
-
-    val csvData = sc.textFile(indexDataSource)
-
-    val data: RDD[(String, String)] = csvData.map(line => {
-      // Read lines
-      val splitted: Array[String] = line.split(";")
-      // Get url
-      if (splitted.size == 2) {
-        (splitted(0), splitted(1).replaceAll("\\[[^\\)]*\\]", ""))
-      } else {
-        ("", "")
-      }
-    })
-
-    val lshIndex = new LshIndex(5, 100, 5, 20, "lshindex", sc)
-    try {
-      lshIndex.createIndex(data)
-    } catch {
-      case e: Exception => println("Already indexed")
-    } finally {
-      val index = sc.textFile("lshindex/part-*").map(line => line.split(" "))
-      index.foreach(line => println(line.deep.mkString(" => ")))
-    }
-
-    sc.stop()
-  }
-}
