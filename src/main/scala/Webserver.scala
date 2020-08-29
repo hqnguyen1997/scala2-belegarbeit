@@ -6,14 +6,15 @@ import akka.stream.ActorMaterializer
 import minhash.LshIndex
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-import search.{IndexMachine, InvertedIndex, SearchMachine}
+import search.{InvertedIndex, SearchMachine}
 
 import scala.io.StdIn
 
 
 object WebServer {
   val indexDataSource = "smallTestSample.csv"
-  val indexSrc = "invertedIndex.bin"
+  val indexOutput = "invertedIndex"
+  val lshIndexOutput = "lshindex"
 
   def main(args: Array[String]) {
 
@@ -25,8 +26,8 @@ object WebServer {
     val conf = new SparkConf().setAppName("appName").setMaster("local[2]")
     val sc = new SparkContext(conf)
 
-    val searchMachine = initSearchServer(indexDataSource, indexSrc, sc)
-    val lshIndex = initLshIndex(indexSrc, sc)
+    val searchMachine = initSearchServer(indexDataSource, indexOutput, sc)
+    val lshIndex = initLshIndex(indexDataSource, lshIndexOutput, sc)
 
     val route = concat(
       pathPrefix("api") {
@@ -78,28 +79,24 @@ object WebServer {
       .onComplete(_ => system.terminate()) // and shutdown when done
   }
 
-  def initSearchServer(indexDataSource: String, indexSrc: String, sc: SparkContext): SearchMachine = {
+  def initSearchServer(indexDataSource: String, indexOutput: String, sc: SparkContext): SearchMachine = {
+    println("Init Search Server")
+    val invertedIndex = new InvertedIndex()
+
     try {
-      val invertedIndex = new IndexMachine().loadIndex("invertedIndex.bin")
-      println("Ein Index ist vorhanden. Laden von Index erfolgreich")
-      new SearchMachine(invertedIndex)
+      invertedIndex.createIndex(indexDataSource, indexOutput, sc)
     } catch {
-      case e: Exception => {
-        println("Ein Index ist nicht vorhanden. Laden von Index wird jetztt ausgeführt")
-        val t1 = System.nanoTime()
-
-        val invertedIndex = new IndexMachine().createIndex(indexDataSource, indexSrc, sc)
-
-        val t2 = System.nanoTime()
-        //Index wird gespeichert
-        println("Index generiert in: " + (t2 - t1) / 1e+6 / 1000 + " Sek.")
-
-        new SearchMachine(invertedIndex)
-      }
+      case e: Exception => println("Already indexed Inverted Index")
     }
+
+    val index = invertedIndex.loadIndex(indexOutput, sc)
+
+    new SearchMachine(index)
+
   }
 
-  def initLshIndex(indexDataSource: String, sc: SparkContext): RDD[Array[String]] = {
+  def initLshIndex(indexDataSource: String, indexOutput: String, sc: SparkContext): RDD[Array[String]] = {
+    println("Init LSH Index")
     val csvData = sc.textFile(indexDataSource)
 
     val data: RDD[(String, String)] = csvData.map(line => {
@@ -113,19 +110,17 @@ object WebServer {
       }
     })
 
-    val lshIndex = new LshIndex(5, 100, 5, 20, "lshindex", sc)
+    val lshIndex = new LshIndex(5, 100, 5, 20, indexOutput, sc)
 
     try {
       lshIndex.createIndex(data)
     } catch {
-      case e: Exception => println("Already indexed")
+      case e: Exception => println("Already indexed LSH Index")
     }
 
-    val index = sc.textFile("lshindex/part-*").map(line => line.split(" "))
-    index.foreach(line => println(line.deep.mkString(" => ")))
+    val index = sc.textFile(indexOutput + "/part-*").map(line => line.split(" "))
 
     index
-
   }
 
   def findDuplicate(url: String, lshIndex: RDD[Array[String]]): RDD[Array[String]] = {
