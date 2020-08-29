@@ -22,3 +22,21 @@ class MinHash(text: String, signatureLength: Int = 100, shingleLength: Int = 3, 
     }.toArray
   }
 }
+
+object MinHash {
+  def minhashSimilarity[A](item1: Array[A], item2: Array[A]): Double = {
+    if (item1.length != item2.length) {
+      throw new IllegalArgumentException("MinHashes must be equal length")
+    }
+
+    val agreeingRows = item1.zip(item2).map { case (val1, val2) =>
+      if (val1 == val2) {
+        1
+      } else {
+        0
+      }
+    }.sum
+
+    agreeingRows.toDouble / item1.length.toDouble
+  }
+}

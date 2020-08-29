@@ -78,5 +78,4 @@ class LshIndex(shingleLength: Int, signatureLength: Int, seed: Int, numBuckets: 
       }
     }
   }
-
 }
