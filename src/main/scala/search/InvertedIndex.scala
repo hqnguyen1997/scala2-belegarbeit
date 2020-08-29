@@ -1,58 +1,75 @@
 package search
 
-import java.io.{FileInputStream, FileOutputStream, ObjectInputStream, ObjectOutputStream}
-
+import org.apache.spark.SparkContext
+import org.apache.spark.rdd.RDD
 import stemmers.{EnglishStemmer, GermanStemmer}
-import utils.{LanguageDetector, Tokenizer}
+import utils.{LangCode, LanguageDetector, Tokenizer}
 
-class InvertedIndex(oldII:Map[String, Map[String,Int]],documentsSize:Int) {
+class InvertedIndex {
 
-  val ii:Map[String, Map[String,Int]]=oldII
-  def size()=documentsSize
+  def createIndex(dataSource: String, indexOutput: String, sc: SparkContext) = {
+    val csvData = sc.textFile(dataSource)
+    val preferredLanguages = List(LangCode.GERMAN, LangCode.ENGLISH)
 
+    val rows: RDD[(String, String)] = csvData.map(line => {
+      // Read lines
+      val splitted: Array[String] = line.split(";")
+      // Get url
+      if (splitted.size == 2) {
+        (splitted(0), splitted(1))
+      } else {
+        ("", "")
+      }
+    })
 
-  def saveToFile(file:String):Unit={
-    val oos = {
-      new ObjectOutputStream(new FileOutputStream(file))
-    }
-    try {
-      oos.writeObject((ii,size()))
-    } finally {
-      oos.close()
-    }
+    /**
+     * -- Tokenize text => (url, token)
+     * -- Determine language => (url, token, language_code)
+     * -- Filter records, which are in preferred language
+     * -- Filter stop word
+     * -- Stemming => (url, stemmed_token)
+     * -- Caculate term frequency
+     *
+     */
+    val preparedData: RDD[(String, Map[String, Int])] =
+      rows
+        .map(rec => (rec._1, Tokenizer.tokenize(rec._2)))
+        .map(rec => (rec._1, rec._2, LanguageDetector.detect(rec._2)))
+        .filter(preferredLanguages contains _._3)
+        .map(rec => (rec._1, StopwordFilter.filter(rec._2, rec._3), rec._3))
+        .map(rec => (
+          rec._1,
+          if (rec._3 == LangCode.GERMAN) rec._2.map(word => GermanStemmer.stem(word))
+          else rec._2.map(word => EnglishStemmer.stem(word))
+        ))
+        .map(rec => (rec._1 -> Tf.tf(rec._2)))
+
+    val index = preparedData
+      .flatMap(tuple => tuple._2.map(x => (x._1, (tuple._1, x._2)))).mapValues(Map(_)).reduceByKey(_ ++ _)
+
+    this.saveIndex(index, indexOutput)
+
+    println("Index saved:" + indexOutput)
   }
 
-  def loadFromFile(file:String): InvertedIndex ={
-
-    val ois = new ObjectInputStream(new FileInputStream(file))
-    try {
-      val rawIndex = ois.readObject.asInstanceOf[(Map[String, Map[String,Int]],Int)]
-      new InvertedIndex(rawIndex._1,rawIndex._2)
-    } finally {
-      ois.close()
-    }
+  def saveIndex(index: RDD[(String, Map[String, Int])], indexOutput: String): Unit = {
+    index.map(item => item._1 + "||" + item._2.mkString("==")).saveAsTextFile(indexOutput)
   }
 
-  def search(query:String):Map[String,Double]={
-    //die suchanfrage wird tokenisiert
-  val tokens=Tokenizer.tokenize(query)
-    //es wird ermittelt um welche Sprache es sich handelt
-  val detectedlanguage=LanguageDetector.detect(tokens)
-    //abhängig von der Sprache werden die Stopworte entfernt
-  val filterdStopwords=StopwordFilter.filter(tokens,detectedlanguage)
-    //abhängig von der Sprache werden die passenden Stemmer benutzt
-    val stemmedTokens= if(detectedlanguage=="DE")filterdStopwords.map(GermanStemmer.stem) else filterdStopwords.map(EnglishStemmer.stem)
+  def loadIndex(indexSrc: String, sc: SparkContext): RDD[(String, Map[String, Int])] = {
+    val dataSrc = sc.textFile(indexSrc + "/part-*")
 
-    //die  Term Frequency wird ermittelt
-    val tokenTF:Map[String,Map[String,Int]]=stemmedTokens .map(token=>(token,(ii(token)))).toMap
-    //die  Term Frequency, Document Frequency wird ermittelt
-    val tokenTFDF=tokenTF.map(rec=>(rec._1,rec._2,rec._2.size))
-    // die Corpusgröße wird ermittelt
-    val tokenTFDFCorupusSize=tokenTFDF.map(rec=>(rec._2,rec._3,size()))
-    //tf idf wird berechnet
-    val tf_idf=tokenTFDFCorupusSize.map(rec=>(rec._1,Math.log10(rec._3.toDouble/rec._2.toDouble)))
+    val index: RDD[(String, Map[String, Int])] = dataSrc.map(line => {
+      val splittedLine = line.split("[||]").map(item => item.trim)
+      val word = splittedLine(0)
+      val splittedMapString = splittedLine(2).split("==")
+      val resultMap = splittedMapString.foldLeft(Map[String, Int]())((base, item) => {
+        val splittedItem = item.split("->")
+        base.updated(splittedItem(0).trim, splittedItem(1).trim.toInt)
+      })
+      (word, resultMap)
+    })
 
-
-    tf_idf.flatMap(rec=>rec._1.map { case (k, v) => (k, v * rec._2) }).toMap
+    index
   }
 }

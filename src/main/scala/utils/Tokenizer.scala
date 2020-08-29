@@ -1,10 +1,10 @@
 package utils
 
 object Tokenizer {
-
   /**
    * Tokenize string in array of word
    * all words should be lower case
+   *
    * @param text
    * @return
    */
