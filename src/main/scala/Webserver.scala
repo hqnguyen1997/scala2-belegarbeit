@@ -33,13 +33,13 @@ object WebServer {
       pathPrefix("api") {
         path("search") {
           get {
-            parameter("query".as[String]) { query =>
+            parameter("query".as[String],"language".as[String]) { (query,language) =>
               if (query.contains("url:::")) {
                 val params = query.split(":::")
                 val result = searchMachine.searchUrl(params(1))
                 complete(HttpEntity(ContentTypes.`application/json`, "{\"" + result + "\": 1 }"))
               } else {
-                val result = searchMachine.search(query)
+                val result = searchMachine.search(query,language)
                 if (result.size == "") {
                   complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, "{}"))
                 } else {

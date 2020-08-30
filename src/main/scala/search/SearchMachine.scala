@@ -11,15 +11,13 @@ class SearchMachine(index: RDD[(String, Map[String, Int])]) {
    * @param query
    * @return url and score
    */
-  def search(query: String): Map[String, Double] = {
+  def search(query: String,language: String): Map[String, Double] = {
     // Tokenize query
     val tokens = Tokenizer.tokenize(query)
-    // Detect language of query
-    val detectedlanguage = LanguageDetector.detect(tokens)
     // Filter stop words
-    val filterdStopwords = StopwordFilter.filter(tokens, detectedlanguage)
+    val filterdStopwords = StopwordFilter.filter(tokens, language)
     // Using stemmer
-    val stemmedTokens = if (detectedlanguage == "DE") filterdStopwords.map(GermanStemmer.stem) else filterdStopwords.map(EnglishStemmer.stem)
+    val stemmedTokens = if (language == "DE") filterdStopwords.map(GermanStemmer.stem) else filterdStopwords.map(EnglishStemmer.stem)
 
     // Calculate term frequency
     val tokenTF: Map[String, Map[String, Int]] = stemmedTokens.map(token => (token, index.filter(_._1 == token).first()._2)).toMap
