@@ -97,17 +97,17 @@
     }
 
     function onGetDuplicate() {
-        const btn = event.srcElement;
-        const url = btn.getAttribute("data-url");
-        fetch("/api/duplicate?url=${url}", {
+        var btn = event.srcElement;
+        var url = btn.getAttribute("data-url");
+        fetch("/api/duplicate?url="+url, {
             method: "GET",
         }).then((response) => {
             response.json().then((jsonResult) => {
-                const resultArray = jsonResult.result.split(",");
-                let html = "";
+                var resultArray = jsonResult.result.split(",");
+                var html = "";
 
                 resultArray.forEach((url) => {
-                    html += "<div class=\"row\">\n" +
+                    html+= "<div class=\"row\">\n" +
                         "<div class=\"col-12 p-2 bg-secondary  mt-4\"><a target='_blank'  class='text-white' href='" + url + "'>" + url + "</a>" +
                         "</div>\n" +
                         "</div>";

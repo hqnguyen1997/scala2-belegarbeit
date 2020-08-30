@@ -56,9 +56,14 @@ object WebServer {
           get {
             parameter("url".as[String]) { url =>
               val result = findDuplicate(url, lshIndex)
+              if(result.count()==0){
+                val jsonResult = scala.util.parsing.json.JSONObject(Map("result" -> ""))
+                complete(HttpEntity(ContentTypes.`application/json`, jsonResult.toString()))
+              }else{
               val arrayResult = result.first.deep.mkString(",")
               val jsonResult = scala.util.parsing.json.JSONObject(Map("result" -> arrayResult))
               complete(HttpEntity(ContentTypes.`application/json`, jsonResult.toString()))
+              }
             }
           }
         }
