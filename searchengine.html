@@ -9,18 +9,36 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
           integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 
-    <title>song lyrics search engine</title>
+    <title>SONGFINDER ♫</title>
 </head>
 <body class="bg-light">
 <nav class="navbar navbar-light bg-dark ">
-    <a class="navbar-brand text-light" href="#">song lyrics search engine</a>
+    <a class="navbar-brand text-light text-warning" href="#">SONGFINDER ♫</a>
 </nav>
 <div class="container ">
     <div class="row">
         <div class="col-12 p-0 mt-4">
             <form class="form-inline" onsubmit="search(); return false;">
-                <input class="form-control mr-sm-2 " type="search" id="query" placeholder="query">
-                <button class="btn btn-primary my-2 border  border-0 my-sm-0" type="submit">search</button>
+
+                <div class="col-sm-4 col-md-5 col-lg-7 p-1">
+                    <input class="form-control w-100 col-sm-12 col-md-12 col-lg-12" type="search" id="query" placeholder="Sie ist die eine, die immer lacht">
+                </div>
+                <div class="col-sm-5 col-md-4 col-lg-3 p-1">
+                    <div class="input-group ">
+                        <div class="input-group-prepend">
+                            <label class="input-group-text" for="inputGroupSelect01">Sprache</label>
+                        </div>
+                        <select class="custom-select" id="inputGroupSelect01">
+                            <option selected>deutsch</option>
+                            <option value="1">englisch</option>
+
+                        </select>
+                    </div>
+
+                </div>
+                <div class="col-sm-3 col-md-3 col-lg-2 p-1">
+                    <button class="btn btn-primary col-sm-12 col-md-12 col-lg-12 " type="submit">suchen</button>
+                </div>
             </form>
         </div>
     </div>
