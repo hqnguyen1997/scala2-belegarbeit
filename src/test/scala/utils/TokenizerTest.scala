@@ -24,7 +24,7 @@ class TokenizerTest extends FunSuite {
   }
 
   test("Special character like @, % & should be filtered out") {
-    val text = "This &is a test/ \\and@ €more %test"
+    val text = "This &is a test/ \\and@ more %test"
     assert(Tokenizer.tokenize(text).deep == Array("this", "is", "a", "test", "and", "more", "test").deep)
   }
 }

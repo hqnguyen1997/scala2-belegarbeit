@@ -6,7 +6,7 @@ object LanguageDetector {
 
   val topLanguages = Map(
     LangCode.GERMAN -> "top1000de.txt",
-    LangCode.ENGLISH -> "google-10000-english.txt",
+    LangCode.ENGLISH -> "google-1000-english.txt",
     LangCode.POLISH -> "top1000pl.txt",
     LangCode.SPANISH -> "top1000esp.txt",
     LangCode.RUSSIAN -> "top1000ru.txt",
@@ -28,6 +28,7 @@ object LanguageDetector {
     val scoring = topLanguages.map(t => {
       val wordsSource = getClass.getResourceAsStream("/" + t._2)
       val wordsSet = Source.fromInputStream(wordsSource)(Codec("ISO-8859-1")).getLines().toSet
+
       val score = wordsSet.intersect(tokensDistinct).size
       (t._1, score)
       //Eine Extra Scoring wird addiert damit auch unbekannte Token ermittelt werden können
