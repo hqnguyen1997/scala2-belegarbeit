@@ -12,6 +12,7 @@ class SearchMachine(index: RDD[(String, Map[String, Int])]) {
    * @return url and score
    */
   def search(query: String,language: String): Map[String, Double] = {
+    val limit=50
     // Tokenize query
     val tokens = Tokenizer.tokenize(query)
     // Filter stop words
@@ -27,8 +28,8 @@ class SearchMachine(index: RDD[(String, Map[String, Int])]) {
     val tokenTFDFCorupusSize = tokenTFDF.map(rec => (rec._2, rec._3, index.count().toInt))
     // Calculate tf idf
     val tf_idf = tokenTFDFCorupusSize.map(rec => (rec._1, Math.log10(rec._3.toDouble / rec._2.toDouble)))
-
-    tf_idf.flatMap(rec => rec._1.map { case (k, v) => (k, v * rec._2) }).toMap
+    //limit the response results
+    tf_idf.flatMap(rec => rec._1.map { case (k, v) => (k, v * rec._2) }).toMap.toSeq.sortWith((a,b)=>a._2>b._2).take(limit).toMap
   }
 
   def searchUrl(url: String): String = {
