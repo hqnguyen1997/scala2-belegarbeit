@@ -23,7 +23,12 @@ object WebServer {
     // needed for the future flatMap/onComplete in the end
     implicit val executionContext = system.dispatcher
 
-    val conf = new SparkConf().setAppName("appName").setMaster("local[2]")
+    val conf = new SparkConf().setAppName("appName")
+      .setMaster("local[*]")
+      .set("spark.executor.memory", "70g")
+      .set("spark.driver.memory", "50g")
+      .set("spark.memory.offHeap.enabled","true")
+      .set("spark.memory.offHeap.size","18g")
     val sc = new SparkContext(conf)
 
     val searchMachine = initSearchServer(indexDataSource, indexOutput, sc)

@@ -21,15 +21,23 @@ class SearchMachine(index: RDD[(String, Map[String, Int])]) {
     val stemmedTokens = if (language == "DE") filterdStopwords.map(GermanStemmer.stem) else filterdStopwords.map(EnglishStemmer.stem)
 
     // Calculate term frequency
-    val tokenTF: Map[String, Map[String, Int]] = stemmedTokens.map(token => (token, index.filter(_._1 == token).first()._2)).toMap
+    val stemmedTokensRDD =index.sparkContext.parallelize(stemmedTokens).map((token)=>(token,0))
+
+
+    val tokenTF: RDD[(String, Map[String, Int])] =  stemmedTokensRDD.join(index).map(x=>(x._1,x._2._2))
+
     // Calculate term frequency, and document frequency
     val tokenTFDF = tokenTF.map(rec => (rec._1, rec._2, rec._2.size))
+
     // Calculate Corpusgröße
-    val tokenTFDFCorupusSize = tokenTFDF.map(rec => (rec._2, rec._3, index.count().toInt))
+    val indexCount=index.count().toInt
+    val tokenTFDFCorupusSize = tokenTFDF.map(rec => (rec._2, rec._3,indexCount))
+
     // Calculate tf idf
     val tf_idf = tokenTFDFCorupusSize.map(rec => (rec._1, Math.log10(rec._3.toDouble / rec._2.toDouble)))
     //limit the response results
-    tf_idf.flatMap(rec => rec._1.map { case (k, v) => (k, v * rec._2) }).toMap.toSeq.sortWith((a,b)=>a._2>b._2).take(limit).toMap
+    tf_idf.flatMap(rec => rec._1.map { case (k, v) => (k, v * rec._2) }).sortBy(_._2,false).take(limit).toMap
+
   }
 
   def searchUrl(url: String): String = {
