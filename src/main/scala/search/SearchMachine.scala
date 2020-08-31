@@ -12,7 +12,6 @@ class SearchMachine(index: RDD[(String,Iterable[Map[String, Int]])]) {
    * @return url and score
    */
   val corpusSize:Int=index.count().toInt
-
   def search(query: String,language: String): Map[String, Double] = {
     val limit=50
     // Tokenize query
@@ -45,6 +44,7 @@ class SearchMachine(index: RDD[(String,Iterable[Map[String, Int]])]) {
    val tf_idf= tf.flatMap(rec=>rec._1.flatMap(rec2=>rec2.map(rec3=>(rec3._1,rec3._2*rec._2))))
 
    tf_idf.takeOrdered(limit)(Ordering[Double].reverse.on(x=>x._2)).toMap
+
 
    // val tf_idf= tf.flatMap(rec=>rec._1.flatMap(rec2=>rec2.map(rec3=>(rec3._1,rec3._2*rec._2)))).collectAsMap()
     // tf_idf.toSeq.sortBy(_._2)(Ordering[Double].reverse.on(x=>x)).take(limit).toMap

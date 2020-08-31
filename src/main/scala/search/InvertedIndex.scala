@@ -1,6 +1,6 @@
 package search
 
-import org.apache.spark.SparkContext
+import org.apache.spark.{HashPartitioner, RangePartitioner, SparkContext}
 import org.apache.spark.rdd.RDD
 import stemmers.{EnglishStemmer, GermanStemmer}
 import utils.{LangCode, LanguageDetector, Tokenizer}
@@ -9,6 +9,7 @@ class InvertedIndex {
 
   def createIndex(dataSource: String, indexOutput: String, sc: SparkContext) = {
     val csvData = sc.textFile(dataSource)
+
     val preferredLanguages = List(LangCode.GERMAN, LangCode.ENGLISH)
 
     val rows: RDD[(String, String)] = csvData.map(line => {
@@ -56,7 +57,7 @@ class InvertedIndex {
     index.map(item => item._1 + "||" + item._2.mkString("==")).saveAsTextFile(indexOutput)
   }
 
-  def loadIndex(indexSrc: String, sc: SparkContext): RDD[(String, Map[String, Int])] = {
+  def loadIndex(indexSrc: String, sc: SparkContext): RDD[(String,Iterable[Map[String, Int]])] = {
 
     val dataSrc = sc.textFile(indexSrc + "/part-*")
 
@@ -71,6 +72,8 @@ class InvertedIndex {
       (word, resultMap)
     })
 
-    index
+
+    val partitioned = index.groupByKey.partitionBy(new HashPartitioner(50))
+    partitioned
   }
 }

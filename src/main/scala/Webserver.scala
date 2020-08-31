@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import minhash.LshIndex
 import org.apache.spark.rdd.RDD
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{HashPartitioner, RangePartitioner, SparkConf, SparkContext}
 import search.{InvertedIndex, SearchMachine}
 
 import scala.io.StdIn
@@ -25,10 +25,9 @@ object WebServer {
 
     val conf = new SparkConf().setAppName("appName")
       .setMaster("local[*]")
-      .set("spark.executor.memory", "70g")
-      .set("spark.driver.memory", "50g")
-      .set("spark.memory.offHeap.enabled","true")
-      .set("spark.memory.offHeap.size","18g")
+      .set("spark.executor.memory", "16g")
+      .set("spark.driver.memory", "16g")
+    
     val sc = new SparkContext(conf)
 
     val searchMachine = initSearchServer(indexDataSource, indexOutput, sc)
@@ -99,7 +98,8 @@ object WebServer {
       case e: Exception => println("Already indexed Inverted Index")
     }
 
-    val index = invertedIndex.loadIndex(indexOutput, sc).groupByKey
+    val index = invertedIndex.loadIndex(indexOutput, sc)
+
 
     new SearchMachine(index)
 
