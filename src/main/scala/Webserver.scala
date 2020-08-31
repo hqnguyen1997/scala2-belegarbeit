@@ -99,7 +99,7 @@ object WebServer {
       case e: Exception => println("Already indexed Inverted Index")
     }
 
-    val index = invertedIndex.loadIndex(indexOutput, sc)
+    val index = invertedIndex.loadIndex(indexOutput, sc).groupByKey
 
     new SearchMachine(index)
 
