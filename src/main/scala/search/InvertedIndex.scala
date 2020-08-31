@@ -57,6 +57,7 @@ class InvertedIndex {
   }
 
   def loadIndex(indexSrc: String, sc: SparkContext): RDD[(String, Map[String, Int])] = {
+
     val dataSrc = sc.textFile(indexSrc + "/part-*")
 
     val index: RDD[(String, Map[String, Int])] = dataSrc.map(line => {

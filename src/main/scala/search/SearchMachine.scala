@@ -22,10 +22,12 @@ class SearchMachine(index: RDD[(String,Iterable[Map[String, Int]])]) {
     // Using stemmer
     val stemmedTokens = if (language == "DE") filterdStopwords.map(GermanStemmer.stem) else filterdStopwords.map(EnglishStemmer.stem)
 
-    // Calculate term frequency
-
+   // filter tokens
     val filteredIndex:RDD[(String,Iterable[Map[String, Int]])]=index.filter(token=>stemmedTokens.contains(token._1))
+
+    // Calculate term frequency
     val tokenTF: RDD[(String, Iterable[Map[String, Int]])] =  filteredIndex
+
 
     // Calculate term frequency, and document frequency
     val tokenTFDF = tokenTF.map(rec => (rec._1, rec._2, rec._2.size))
@@ -40,11 +42,13 @@ class SearchMachine(index: RDD[(String,Iterable[Map[String, Int]])]) {
 
     //calculate idf
 
-    val tf_idf= tf.flatMap(rec=>rec._1.flatMap(rec2=>rec2.map(rec3=>(rec3._1,rec3._2*rec._2))))
+   val tf_idf= tf.flatMap(rec=>rec._1.flatMap(rec2=>rec2.map(rec3=>(rec3._1,rec3._2*rec._2))))
 
+   tf_idf.takeOrdered(limit)(Ordering[Double].reverse.on(x=>x._2)).toMap
 
+   // val tf_idf= tf.flatMap(rec=>rec._1.flatMap(rec2=>rec2.map(rec3=>(rec3._1,rec3._2*rec._2)))).collectAsMap()
+    // tf_idf.toSeq.sortBy(_._2)(Ordering[Double].reverse.on(x=>x)).take(limit).toMap
 
-    tf_idf.takeOrdered(limit)(Ordering[Double].reverse.on(x=>x._2)).toMap
 
 
 
