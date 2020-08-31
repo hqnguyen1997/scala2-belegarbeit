@@ -35,14 +35,14 @@ class SearchMachine(index: RDD[(String,Iterable[Map[String, Int]])]) {
     val corpusCount=this.corpusSize
     val tokenTFDFCorupusSize = tokenTFDF.map(rec => (rec._2, rec._3,corpusCount))
 
-    // Calculate tf idf
-    val tf_idf = tokenTFDFCorupusSize.map(rec => (rec._1, Math.log10(rec._3.toDouble / rec._2.toDouble)))
-    //limit the response results
+    // Calculate tf
+    val tf = tokenTFDFCorupusSize.map(rec => (rec._1, Math.log10(rec._3.toDouble / rec._2.toDouble)))
 
-    tf_idf.flatMap(
-      rec=>rec._1.flatMap(
-        rec2=>rec2.map(rec3=>(rec3._1,rec3._2*rec._2))))
-      .sortBy(_._2,false).take(limit).toMap
+    //calculate idf
+    val tf_idf= tf.flatMap(rec=>rec._1.flatMap(rec2=>rec2.map(rec3=>(rec3._1,rec3._2*rec._2))))
+
+    tf_idf.collect().toSeq.sortWith(_._2 > _._2).take(limit).toMap
+
 
   }
 
